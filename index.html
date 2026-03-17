@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BracketVote</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--surface:#161920;--card:#1e2330;--border:#2a2f40;--accent:#f97316;--text:#f0f2f8;--muted:#8892aa;--win:#22c55e;--danger:#ef4444;--fh:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh}
+a{color:inherit;text-decoration:none}
+header{background:var(--surface);border-bottom:2px solid var(--accent);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.logo{font-family:var(--fh);font-size:28px;font-weight:900;letter-spacing:2px;color:var(--accent);text-transform:uppercase;cursor:pointer;user-select:none}
+.logo span{color:var(--text)}
+.hdr-r{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.hdr-r button{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:var(--fb);font-size:13px;transition:.15s}
+.hdr-r button:hover{border-color:var(--accent);color:var(--accent)}
+main{max-width:1400px;margin:0 auto;padding:32px 20px}
+.btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px 24px;font-family:var(--fh);font-size:18px;font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase;transition:.2s;display:inline-block}
+.btn:hover{opacity:.87;transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-sm{font-size:14px;padding:8px 18px}
+.btn-sec{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:.2s}
+.btn-sec:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 20px;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:.2s}
+.btn-danger:hover{background:rgba(239,68,68,.22);border-color:rgba(239,68,68,.65)}
+/* Auth Overlay */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.76);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:400px;text-align:center;position:relative}
+.auth-card h2{font-family:var(--fh);font-size:30px;font-weight:800;letter-spacing:1px;margin-bottom:6px}
+.auth-card p{color:var(--muted);font-size:14px;margin-bottom:24px;line-height:1.6}
+.auth-card p strong{color:var(--text)}
+.auth-card input[type=email]{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--fb);font-size:15px;outline:none;margin-bottom:12px;transition:.15s}
+.auth-card input[type=email]:focus{border-color:var(--accent)}
+.auth-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;transition:.15s}
+.auth-close:hover{color:var(--text)}
+.auth-icon{font-size:44px;margin-bottom:14px}
+/* Home */
+.home-hero{text-align:center;padding:56px 20px 44px}
+.home-hero h1{font-family:var(--fh);font-size:clamp(44px,7vw,86px);font-weight:900;letter-spacing:4px;text-transform:uppercase;line-height:.93}
+.home-hero h1 em{color:var(--accent);font-style:normal}
+.home-hero p{color:var(--muted);font-size:17px;margin:14px 0 26px}
+.brackets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:18px;margin-bottom:40px}
+.b-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.b-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.b-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.b-card h3{font-family:var(--fh);font-size:22px;font-weight:800;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase}
+.b-card .meta{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.round-pill{display:inline-flex;align-items:center;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.25);border-radius:100px;font-family:var(--fh);font-size:12px;font-weight:700;color:var(--accent);padding:3px 11px;margin-top:10px;letter-spacing:1px}
+.t-avs{display:flex;margin-top:13px}
+.t-av{width:28px;height:28px;border-radius:50%;border:2px solid var(--card);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--muted);margin-left:-6px;overflow:hidden;flex-shrink:0}
+.t-av:first-child{margin-left:0}
+.t-av img{width:100%;height:100%;object-fit:cover}
+/* Bracket page header */
+.page-hdr{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.back-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 13px;border-radius:7px;cursor:pointer;font-family:var(--fb);font-size:13px;transition:.15s;flex-shrink:0}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-hdr h1{font-family:var(--fh);font-size:clamp(20px,4vw,36px);font-weight:900;letter-spacing:2px;text-transform:uppercase;flex:1}
+.r-badge{display:inline-block;background:var(--accent);color:#fff;font-family:var(--fh);font-size:13px;font-weight:700;padding:4px 14px;border-radius:100px;letter-spacing:1px;text-transform:uppercase;flex-shrink:0}
+/* Bracket */
+.bkt-scroll{overflow-x:auto;padding-bottom:28px;-webkit-overflow-scrolling:touch}
+.bkt{display:flex;align-items:flex-start;gap:0;min-width:max-content;padding:4px 0 12px}
+.r-col{display:flex;flex-direction:column;align-items:center;min-width:210px;padding:0 6px}
+.r-col.wide{min-width:230px}
+.r-col.xwide{min-width:250px}
+.r-title{font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid var(--border);width:100%;text-align:center}
+.r-col.act .r-title{color:var(--accent);border-bottom-color:var(--accent)}
+.mu{background:var(--card);border:1px solid var(--border);border-radius:10px;width:100%;margin:0;overflow:hidden;flex-shrink:0}
+.mu.act-mu{border-color:rgba(249,115,22,.35);box-shadow:0 0 0 1px rgba(249,115,22,.12)}
+.t-row{display:flex;align-items:center;gap:7px;padding:8px 11px;border-bottom:1px solid var(--border);transition:.13s;position:relative}
+.t-row:last-of-type{border-bottom:none}
+.t-row.clickable{cursor:pointer}
+.t-row.clickable:hover{background:rgba(249,115,22,.1)}
+.t-row.my-vote{background:rgba(34,197,94,.08);border-left:3px solid var(--win)}
+.t-row.winner{background:rgba(34,197,94,.06)}
+.t-row.loser{opacity:.33}
+.sd{font-family:var(--fh);font-size:12px;font-weight:700;color:var(--muted);min-width:20px;text-align:right;flex-shrink:0}
+.ta{width:26px;height:26px;border-radius:50%;background:var(--surface);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--muted);overflow:hidden}
+.ta img{width:100%;height:100%;object-fit:cover}
+.tn{font-size:12px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--win);margin-left:auto;flex-shrink:0}
+.tbd-slot{color:var(--muted);font-style:italic;font-size:11px;padding:9px 11px;opacity:.7}
+.mu-ft{font-size:11px;color:var(--muted);text-align:center;padding:5px 8px;background:var(--surface)}
+.pb{height:3px;background:var(--border);margin:0 11px 5px}
+.pf{height:100%;background:var(--win);transition:.4s;border-radius:2px}
+/* Form/Create/Manage */
+.fsec{max-width:900px;margin:0 auto}
+.fsec h2{font-family:var(--fh);font-size:28px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:22px}
+.crd{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.crd h3{font-family:var(--fh);font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;color:var(--accent)}
+.fld{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.fld label{font-size:13px;color:var(--muted);min-width:90px}
+.fld input[type=text]{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--fb);font-size:14px;outline:none;flex:1;min-width:160px;transition:.15s}
+.fld input:focus{border-color:var(--accent)}
+.info-b{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.22);border-radius:8px;padding:10px 14px;font-size:13px;color:#93c5fd;margin-bottom:14px;line-height:1.6}
+.warn-b{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.22);border-radius:8px;padding:10px 14px;font-size:13px;color:#fed7aa;margin-bottom:14px;line-height:1.6}
+/* Size selector */
+.size-track{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;width:max-content;margin-bottom:10px;gap:2px}
+.size-opt{font-family:var(--fh);font-size:17px;font-weight:700;letter-spacing:1px;padding:8px 20px;border-radius:7px;cursor:pointer;color:var(--muted);transition:.18s;user-select:none;border:none;background:none}
+.size-opt:hover{color:var(--text)}
+.size-opt.sel{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(249,115,22,.35)}
+.size-desc{font-size:13px;color:var(--muted)}
+/* Team grid */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:10px}
+.t-ent{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px;transition:.15s}
+.t-ent:hover{border-color:rgba(249,115,22,.25)}
+.t-ent-h{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:1px}
+.t-ent-h span{color:var(--text)}
+.t-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--fb);font-size:12px;outline:none;margin-bottom:8px;transition:.15s}
+.t-inp:focus{border-color:var(--accent)}
+.fl{background:var(--card);border:1px dashed var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);font-size:11px;cursor:pointer;transition:.15s;white-space:nowrap;font-family:var(--fb)}
+.fl:hover{border-color:var(--accent);color:var(--accent)}
+.ith{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.ie{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px dashed var(--border);flex-shrink:0}
+.rmi{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 4px;line-height:1;border-radius:4px;transition:.15s}
+.rmi:hover{color:var(--danger);background:rgba(239,68,68,.1)}
+/* Manage grid */
+.mg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+@media(max-width:500px){.mg-grid{grid-template-columns:1fr}}
+.mg-btn{padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:.2s;width:100%;text-align:center}
+.mg-btn:hover{border-color:var(--accent);color:var(--accent)}
+.mg-btn.dng{border-color:rgba(239,68,68,.28);color:#f87171}
+.mg-btn.dng:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.6)}
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--accent);color:var(--text);font-family:var(--fh);font-size:16px;font-weight:700;padding:11px 22px;border-radius:8px;letter-spacing:1px;animation:tin .3s ease;z-index:999;pointer-events:none;max-width:320px}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* Modal */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px)}
+.mo-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px;max-width:420px;width:90%;text-align:center}
+.mo-box h3{font-family:var(--fh);font-size:22px;font-weight:800;letter-spacing:1px;margin-bottom:10px}
+.mo-box p{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.6}
+.mo-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+/* Misc */
+.loading{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:16px;color:var(--muted);font-size:15px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:56px 20px;color:var(--muted)}
+.empty h3{font-family:var(--fh);font-size:28px;margin-bottom:10px;letter-spacing:1px}
+.vote-banner{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.18);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.vote-banner a{color:var(--accent);font-weight:700;text-decoration:underline;cursor:pointer}
+.finalist-row{background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.2);border-radius:9px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:.5px}
+.finalist-row .ta{width:32px;height:32px;font-size:11px}
+@media(max-width:700px){.size-opt{padding:7px 13px;font-size:15px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" onclick="goHome()">Bracket<span>Vote</span></div>
+  <div class="hdr-r" id="hdr-r"></div>
+</header>
+<main id="app"><div class="loading"><div class="spinner"></div><span>Connecting to database&hellip;</span></div></main>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getAnalytics}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+import{getAuth,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink,onAuthStateChanged,signOut as fbSignOut}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getFirestore,collection,doc,getDoc,setDoc,updateDoc,deleteDoc,onSnapshot,arrayUnion,increment,getDocs,query,orderBy}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ── Firebase init ────────────────────────────────── */
+const cfg={apiKey:"AIzaSyBMuRuE7W0dRGoQYYT_DMNgexW_vI1B4HA",authDomain:"bracket-vote.firebaseapp.com",projectId:"bracket-vote",storageBucket:"bracket-vote.firebasestorage.app",messagingSenderId:"47548745302",appId:"1:47548745302:web:ab1b9ec2e785b034d4ddf7",measurementId:"G-YR310G3PXK"};
+const fbApp=initializeApp(cfg);
+const analytics=getAnalytics(fbApp);
+const auth=getAuth(fbApp);
+const db=getFirestore(fbApp);
+
+/* ── State ────────────────────────────────────────── */
+const S={user:null,view:"loading",activeBid:null,brackets:{},votes:{},unsubB:null,unsubV:null,initialized:false,showAuth:false,authStep:"email",authEmail:"",authCb:null};
+let newSize=16,newTeams=makeBlankTeams(16);
+let editTeams=null,editSize=16;
+
+/* ── Constants & Helpers ──────────────────────────── */
+const SIZES=[4,8,16,32,64];
+const numRounds=n=>Math.log2(n);
+const mkid=(r,m)=>"r"+r+"_m"+m;
+const genId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const fmtDate=v=>{try{const d=v?.toDate?v.toDate():new Date(v);return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}catch{return"";}};
+function getCA(b){if(!b?.createdAt)return new Date();try{return b.createdAt.toDate?b.createdAt.toDate():new Date(b.createdAt);}catch{return new Date();}}
+function roundNames(n){const o=[];let t=n;while(t>1){if(t===2)o.push("Championship");else if(t===4)o.push("Semifinals");else if(t===8)o.push("Quarterfinals");else o.push("Round of "+t);t/=2;}return o;}
+function getCurrentRound(b){const ms=Date.now()-getCA(b).getTime();const offset=b.roundOffset||0;const max=numRounds(b.size||16)-1;return Math.min(max,Math.max(0,Math.floor(ms/(7*24*3600*1000))+offset));}
+const sizeDesc=n=>`${n} teams → ${numRounds(n)} rounds (${numRounds(n)} weeks)`;
+function makeBlankTeams(n){return Array.from({length:n},(_,i)=>({seed:i+1,name:"",img:null}));}
+
+/* ── Image Compression ────────────────────────────── */
+function compressImage(file){return new Promise(resolve=>{const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{const MAX=80;let w=img.width,h=img.height;if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;canvas.getContext("2d").drawImage(img,0,0,w,h);resolve(canvas.toDataURL("image/jpeg",0.72));};img.src=e.target.result;};reader.readAsDataURL(file);});}
+
+/* ── Firestore Listeners ──────────────────────────── */
+function startBListener(){if(S.unsubB)S.unsubB();const q=query(collection(db,"brackets"),orderBy("createdAt","desc"));S.unsubB=onSnapshot(q,snap=>{S.brackets={};snap.forEach(d=>{S.brackets[d.id]={id:d.id,...d.data()};});if(S.initialized)renderApp();},e=>console.error("brackets:",e));}
+function startVListener(bid){if(S.unsubV){S.unsubV();S.unsubV=null;}S.unsubV=onSnapshot(collection(db,"brackets",bid,"votes"),snap=>{if(!S.votes[bid])S.votes[bid]={};snap.forEach(d=>{S.votes[bid][d.id]=d.data();});if(S.view==="bracket"&&S.activeBid===bid&&S.initialized)renderApp();},e=>console.error("votes:",e));}
+
+/* ── Firestore Writes ─────────────────────────────── */
+const fbSave=async b=>setDoc(doc(db,"brackets",b.id),b);
+async function fbDelete(bid){const sn=await getDocs(collection(db,"brackets",bid,"votes"));await Promise.all(sn.docs.map(d=>deleteDoc(d.ref)));await deleteDoc(doc(db,"brackets",bid));delete S.brackets[bid];delete S.votes[bid];}
+async function fbResetVotes(bid){const sn=await getDocs(collection(db,"brackets",bid,"votes"));await Promise.all(sn.docs.map(d=>deleteDoc(d.ref)));S.votes[bid]={};}
+async function fbVote(bid,r,mi,seed){if(!S.user)return;const key=mkid(r,mi);const ref=doc(db,"brackets",bid,"votes",key);const sn=await getDoc(ref);const uid=S.user.uid;if(sn.exists()){if((sn.data().voters||[]).includes(uid)){toast("You already voted in this matchup!");return;}await updateDoc(ref,{["counts."+seed]:increment(1),voters:arrayUnion(uid)});}else{await setDoc(ref,{counts:{[seed]:1},voters:[uid]});}if(!S.votes[bid])S.votes[bid]={};if(!S.votes[bid][key])S.votes[bid][key]={counts:{},voters:[]};S.votes[bid][key].counts[seed]=(S.votes[bid][key].counts[seed]||0)+1;if(!S.votes[bid][key].voters.includes(uid))S.votes[bid][key].voters.push(uid);renderApp();toast("Vote cast! 🏆");}
+
+/* ── Auth ─────────────────────────────────────────── */
+const actionCodeSettings={url:window.location.origin+window.location.pathname,handleCodeInApp:true};
+function requireUser(cb){if(S.user){cb();return;}S.showAuth=true;S.authStep="email";S.authCb=cb;renderApp();}
+function dismissAuth(){S.showAuth=false;S.authCb=null;S.authStep="email";renderApp();}
+async function handleSendLink(){const email=(document.getElementById("auth-email")?.value||"").trim().toLowerCase();if(!email||!email.includes("@")){toast("Enter a valid email address");return;}const btn=document.getElementById("auth-send-btn");if(btn){btn.disabled=true;btn.textContent="Sending…";}try{await sendSignInLinkToEmail(auth,email,actionCodeSettings);localStorage.setItem("bv_email_for_link",email);S.authEmail=email;S.authStep="sent";renderAuthOverlay();}catch(e){toast("Error: "+(e.message||"Could not send link"));if(btn){btn.disabled=false;btn.textContent="Send Sign-In Link →";}}}
+async function completeEmailSignIn(email){try{await signInWithEmailLink(auth,email,window.location.href);localStorage.removeItem("bv_email_for_link");window.history.replaceState({},"",window.location.pathname);toast("Signed in! Welcome 🎉");}catch(e){toast("Sign-in failed: "+(e.message||"Unknown error"));S.view="home";renderApp();}}
+async function handleConfirmEmail(){const email=(document.getElementById("confirm-email")?.value||"").trim().toLowerCase();if(!email||!email.includes("@")){toast("Enter a valid email");return;}const btn=document.getElementById("confirm-btn");if(btn){btn.disabled=true;btn.textContent="Signing in…";}await completeEmailSignIn(email);}
+async function doSignOut(){try{await fbSignOut(auth);S.user=null;toast("Signed out");renderApp();}catch(e){console.error(e);}}
+
+/* ── Bracket Logic ────────────────────────────────── */
+function roundWinner(bid,r,mi){const b=S.brackets[bid];if(!b)return null;if(r>=getCurrentRound(b))return null;const vd=(S.votes[bid]||{})[mkid(r,mi)];if(!vd||!vd.counts)return null;const seeds=Object.keys(vd.counts).map(Number);if(!seeds.length)return null;return seeds.reduce((a,x)=>vd.counts[x]>vd.counts[a]?x:a,seeds[0]);}
+function buildRounds(bid){const b=S.brackets[bid];if(!b)return[];const n=b.size||16;const sorted=[...(b.teams||[])].filter(t=>t?.name).sort((a,x)=>a.seed-x.seed);while(sorted.length<n)sorted.push(null);const r0=[];for(let i=0;i<n/2;i++)r0.push([sorted[i],sorted[n-1-i]]);const rounds=[r0];for(let r=1;r<numRounds(n);r++){const prev=rounds[r-1],next=[];for(let i=0;i<prev.length;i+=2){const w1=roundWinner(bid,r-1,i),w2=roundWinner(bid,r-1,i+1);next.push([w1!=null?sorted.find(t=>t&&t.seed===w1)||null:null,w2!=null?sorted.find(t=>t&&t.seed===w2)||null:null]);}rounds.push(next);}return rounds;}
+
+/* ── Navigation ───────────────────────────────────── */
+const goHome=()=>{S.view="home";S.activeBid=null;if(S.unsubV){S.unsubV();S.unsubV=null;}renderApp();};
+const openBracket=id=>{S.view="bracket";S.activeBid=id;startVListener(id);renderApp();};
+const goCreate=()=>{S.view="create";S.activeBid=null;newSize=16;newTeams=makeBlankTeams(16);renderApp();};
+const goManage=bid=>{editTeams=null;editSize=(S.brackets[bid]?.size||16);S.view="manage";S.activeBid=bid;renderApp();};
+const castVote=(bid,r,mi,seed)=>requireUser(async()=>{const key=mkid(r,mi);const vd=(S.votes[bid]||{})[key];if(vd&&S.user&&(vd.voters||[]).includes(S.user.uid)){toast("You already voted here!");return;}await fbVote(bid,r,mi,seed);});
+
+/* ── Toast & Modal ────────────────────────────────── */
+const toast=msg=>{document.querySelectorAll(".toast").forEach(e=>e.remove());const el=document.createElement("div");el.className="toast";el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600);};
+function showModal(title,msg,isDanger,onConfirm){let m=document.getElementById("bv-modal");if(!m){m=document.createElement("div");m.id="bv-modal";document.body.appendChild(m);}m.className="mo";m.innerHTML='<div class="mo-box"><h3>'+esc(title)+'</h3><p>'+esc(msg)+'</p><div class="mo-btns"><button class="btn-sec" onclick="closeModal()">Cancel</button><button class="'+(isDanger?"btn-danger":"btn btn-sm")+'" id="modal-ok">Confirm</button></div></div>';document.getElementById("modal-ok").onclick=()=>{closeModal();onConfirm();};}
+const closeModal=()=>{const m=document.getElementById("bv-modal");if(m)m.remove();};
+
+/* ── Render: Header & Auth Overlay ───────────────── */
+function renderHeader(){const el=document.getElementById("hdr-r");if(!el)return;if(S.user){el.innerHTML='<span style="color:var(--muted);font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(S.user.email)+'</span><button onclick="doSignOut()">Sign out</button>';}else{el.innerHTML='<button onclick="requireUser(()=>renderApp())">Sign in</button>';}}
+
+function renderAuthOverlay(){
+  let ov=document.getElementById("auth-ov");
+  if(S.showAuth){
+    if(!ov){ov=document.createElement("div");ov.id="auth-ov";document.body.appendChild(ov);}
+    ov.className="auth-overlay";
+    if(S.authStep==="sent"){
+      ov.innerHTML='<div class="auth-card"><button class="auth-close" onclick="dismissAuth()">&#215;</button><div class="auth-icon">&#x1F4E7;</div><h2>Check Your Email</h2><p>A sign-in link was sent to <strong>'+esc(S.authEmail)+'</strong>.<br>Click the link in your email to continue.<br><br>You can close this tab and open the link on any device.</p><button class="btn-sec" style="width:100%;margin-top:4px" onclick="S.authStep=\'email\';renderAuthOverlay()">&#8592; Use a different email</button></div>';
+    } else {
+      ov.innerHTML='<div class="auth-card"><button class="auth-close" onclick="dismissAuth()">&#215;</button><h2>Sign In</h2><p>Enter your email and we\'ll send you a magic sign-in link. No password needed.</p><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"><button class="btn" style="width:100%" id="auth-send-btn" onclick="handleSendLink()">Send Sign-In Link &#8594;</button></div>';
+      setTimeout(()=>{const i=document.getElementById("auth-email");if(i){i.focus();i.onkeydown=e=>{if(e.key==="Enter")handleSendLink();};}},40);
+    }
+  } else if(ov){ov.remove();}
+}
+
+/* ── Render: Main ─────────────────────────────────── */
+function renderApp(){
+  renderHeader();
+  renderAuthOverlay();
+  const a=document.getElementById("app");
+  if(!a)return;
+  if(S.view==="confirming")a.innerHTML=renderConfirmingPage();
+  else if(S.view==="home")a.innerHTML=renderHome();
+  else if(S.view==="bracket")a.innerHTML=renderBracketPage();
+  else if(S.view==="create")a.innerHTML=renderCreatePage();
+  else if(S.view==="manage")a.innerHTML=renderManagePage();
+  else a.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+}
+
+/* ── Render: Confirming (email link return) ─────── */
+function renderConfirmingPage(){
+  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px;text-align:center"><div class="spinner"></div><h2 style="font-family:var(--fh);font-size:28px;font-weight:800;letter-spacing:2px">Completing Sign-In</h2><p style="color:var(--muted);font-size:14px;max-width:340px">For security, please confirm your email address:<br><em>It must match the address where you received the link.</em></p><div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px"><input type="email" id="confirm-email" placeholder="you@example.com" autocomplete="email" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:15px;outline:none;border-color:var(--accent)"><button class="btn" id="confirm-btn" onclick="handleConfirmEmail()" style="width:100%">Complete Sign-In &#8594;</button></div></div>';
+}
+
+/* ── Render: Home ─────────────────────────────────── */
+function renderHome(){
+  const list=Object.values(S.brackets);
+  const hero='<div class="home-hero"><h1>Community<br><em>Bracket</em> Vote</h1><p>Create brackets up to 64 teams. Vote each week. Watch the best advance.</p><button class="btn" onclick="requireUser(goCreate)">+ New Bracket</button></div>';
+  if(!list.length)return hero+'<div class="empty"><h3>No Brackets Yet</h3><p>Be the first to create one!</p></div>';
+  return hero+'<div class="brackets-grid">'+list.map(bCard).join("")+'</div>';
+}
+
+function bCard(b){
+  const n=b.size||16,cr=getCurrentRound(b),rn=roundNames(n);
+  const teams=(b.teams||[]).filter(t=>t?.name).slice(0,8);
+  const bv=S.votes[b.id]||{};
+  const total=Object.values(bv).reduce((s,m)=>s+Object.values(m.counts||{}).reduce((a,c)=>a+c,0),0);
+  const label=rn[cr]||rn[rn.length-1];
+  const allTeams=(b.teams||[]).filter(t=>t?.name);
+  const extra=allTeams.length>8?'<div class="t-av" style="font-size:9px">+'+( allTeams.length-8)+'</div>':"";
+  return'<div class="b-card" onclick="openBracket(\''+b.id+'\')"><h3>'+esc(b.name)+'</h3><div class="meta"><span>'+n+'-team &middot; '+numRounds(n)+' rounds</span><span>Created '+fmtDate(b.createdAt)+'</span><span>'+total+' vote'+(total!==1?'s':'')+ ' cast</span></div><div class="round-pill">&#128293; '+esc(label)+'</div><div class="t-avs">'+teams.map(t=>'<div class="t-av">'+(t.img?'<img src="'+t.img+'" alt="">':esc((t.name||"?")[0].toUpperCase()))+'</div>').join('')+extra+'</div></div>';
+}
+
+/* ── Render: Bracket Page ─────────────────────────── */
+function renderBracketPage(){
+  const b=S.brackets[S.activeBid];
+  if(!b)return'<div style="text-align:center;padding:60px;color:var(--muted)">Loading bracket&hellip;</div>';
+  const n=b.size||16,cr=getCurrentRound(b),rn=roundNames(n);
+  const isAdmin=S.user&&S.user.uid===b.adminUid;
+  const rounds=buildRounds(S.activeBid);
+  const bv=S.votes[S.activeBid]||{};
+  const bid=S.activeBid;
+  const maxR=numRounds(n)-1;
+
+  // Find overall champion (winner of final round)
+  let champion=null;
+  if(cr>maxR){const fw=roundWinner(bid,maxR,0);if(fw!=null){const sorted=[...(b.teams||[])].filter(t=>t?.name).sort((a,x)=>a.seed-x.seed);champion=sorted.find(t=>t&&t.seed===fw)||null;}}
+
+  function tRow(team,ri,mi){
+    if(!team)return'<div class="tbd-slot">TBD</div>';
+    const key=mkid(ri,mi),isAct=ri===cr,isPast=ri<cr;
+    const vd=bv[key]||{counts:{},voters:[]};
+    const hv=S.user&&(vd.voters||[]).includes(S.user.uid);
+    const tot=Object.values(vd.counts||{}).reduce((a,c)=>a+c,0);
+    const showPct=hv||isPast;
+    const canVote=isAct&&S.user&&!hv;
+    const wn=isPast?roundWinner(bid,ri,mi):null;
+    const cnt=(vd.counts||{})[team.seed]||0;
+    const pct=tot>0?Math.round(cnt/tot*100):0;
+    let cls="t-row";
+    if(canVote)cls+=" clickable";
+    if(showPct&&hv&&(S.votes[bid]||{})[key]&&(S.votes[bid][key].voters||[]).includes(S.user.uid)){
+      // check if this is the team they voted for
+      // We don't track per-user choices on client anymore (using UID not localStorage)
+      // Show winner highlight for their pick only if they already voted
+    }
+    if(wn===team.seed)cls+=" winner";
+    else if(wn!=null&&wn!==team.seed)cls+=" loser";
+    const crownHtml=wn===team.seed?'<span style="font-size:11px;flex-shrink:0">&#x1F451;</span>':"";
+    const clickAttr=canVote?'onclick="castVote(\''+bid+'\','+ri+','+mi+','+team.seed+')"':"";
+    return'<div class="'+cls+'" '+clickAttr+'><span class="sd">'+team.seed+'</span><div class="ta">'+(team.img?'<img src="'+team.img+'" alt="">':esc((team.name||"?")[0].toUpperCase()))+'</div><span class="tn">'+esc(team.name)+'</span>'+(showPct?'<span class="tp">'+pct+'%</span>':'')+crownHtml+'</div>'+(showPct?'<div class="pb"><div class="pf" style="width:'+pct+'%"></div></div>':"");
+  }
+
+  function muHTML(pair,ri,mi){
+    const key=mkid(ri,mi),isAct=ri===cr,isPast=ri<cr;
+    const vd=bv[key]||{counts:{},voters:[]};
+    const hv=S.user&&(vd.voters||[]).includes(S.user.uid);
+    const tot=Object.values(vd.counts||{}).reduce((a,c)=>a+c,0);
+    let ft;
+    if(!S.user)ft='<div class="mu-ft"><a onclick="requireUser(()=>renderApp())" style="color:var(--accent);cursor:pointer;font-weight:700">Sign in to vote</a></div>';
+    else if(isAct&&hv)ft='<div class="mu-ft" style="color:var(--win)">&#10003; Voted &middot; '+tot+' vote'+(tot!==1?'s':'')+'</div>';
+    else if(isAct)ft='<div class="mu-ft" style="color:var(--accent)">&#9650; Click a team to vote</div>';
+    else if(isPast)ft='<div class="mu-ft">'+tot+' vote'+(tot!==1?'s':'')+(tot===0?' cast':' cast')+'</div>';
+    else ft='<div class="mu-ft" style="color:var(--muted)">Opens week '+(ri+1)+'</div>';
+    return'<div class="mu'+(isAct?" act-mu":"")+'">'+tRow(pair[0],ri,mi)+tRow(pair[1],ri,mi)+ft+'</div>';
+  }
+
+  function rColHTML(matches,ri){
+    const isAct=ri===cr,isFut=ri>cr;
+    const bS=n>=32?95:110;
+    const gH=bS*Math.pow(2,ri);
+    const colCls="r-col"+(isAct?" act":"")+(n>=32?" wide":"")+(n>=64?" xwide":"");
+    const items=matches.map((pair,mi)=>'<div style="padding-top:'+(mi===0?Math.max(0,gH/2-bS/2):gH-bS)+'px">'+muHTML(pair,ri,mi)+'</div>').join("");
+    return'<div class="'+colCls+'" style="opacity:'+(isFut?.45:1)+'"><div class="r-title">'+(rn[ri]||"Round "+(ri+1))+(isAct?' &#128293;':isFut?' &#128274;':'')+'</div>'+items+'</div>';
+  }
+
+  const signInBanner=!S.user?'<div class="vote-banner"><span>&#128274;</span><span>Percentages are hidden until you vote. <a onclick="requireUser(()=>renderApp())">Sign in</a> to vote and see results.</span></div>':"";
+  const champBanner=champion?'<div class="finalist-row"><div class="ta ta-lg">'+(champion.img?'<img src="'+champion.img+'" alt="">':esc((champion.name||"?")[0].toUpperCase()))+'</div><span style="color:var(--accent)">&#x1F3C6; Champion: </span><span>Seed '+champion.seed+' &ndash; '+esc(champion.name)+'</span></div>':"";
+  const adminBtn=isAdmin?'<button class="btn-sec" style="font-size:13px;padding:6px 13px" onclick="goManage(\''+b.id+'\')">&#9881; Manage</button>':"";
+
+  return'<div class="page-hdr"><button class="back-btn" onclick="goHome()">&#8592; All Brackets</button><h1>'+esc(b.name)+'</h1><span class="r-badge">Week '+(cr+1)+' &middot; '+(rn[cr]||rn[rn.length-1])+'</span>'+adminBtn+'</div>'+champBanner+signInBanner+'<div class="bkt-scroll"><div class="bkt">'+rounds.map((m,i)=>rColHTML(m,i)).join("")+'</div></div>';
+}
+
+/* ── Render: Team Entry (shared create/manage) ────── */
+function teHTML(team,idx,prefix){
+  const vn=prefix==="c"?"newTeams":"editTeams";
+  return'<div class="t-ent" id="'+prefix+'-te-'+idx+'"><div class="t-ent-h">Seed <span>#'+team.seed+'</span></div><input class="t-inp" type="text" placeholder="Team name" value="'+esc(team.name||"")+'" oninput="'+vn+'['+idx+'].name=this.value"><div style="display:flex;align-items:center;gap:7px">'+(team.img?'<img class="ith" src="'+team.img+'" alt="">':'<div class="ie"></div>')+'<label class="fl">'+(team.img?"Change photo":"Add photo")+'<input type="file" accept="image/*" style="display:none" onchange="handleImg(event,'+idx+',\''+prefix+'\')"></label>'+(team.img?'<button class="rmi" onclick="'+vn+'['+idx+'].img=null;refreshGrid(\''+prefix+'\')" title="Remove photo">&#10005;</button>':"")+'</div></div>';
+}
+function handleImg(event,idx,prefix){const file=event.target.files[0];if(!file)return;compressImage(file).then(data=>{(prefix==="c"?newTeams:editTeams)[idx].img=data;refreshGrid(prefix);});}
+function refreshGrid(prefix){const teams=prefix==="c"?newTeams:editTeams;const g=document.getElementById(prefix+"-tg");if(g)g.innerHTML=teams.map((t,i)=>teHTML(t,i,prefix)).join("");}
+
+/* ── Render: Create Page ──────────────────────────── */
+function setNewSize(n){const old=[...newTeams];newTeams=makeBlankTeams(n);for(let i=0;i<Math.min(old.length,n);i++){newTeams[i].name=old[i].name||"";newTeams[i].img=old[i].img||null;}newSize=n;document.querySelectorAll(".size-opt").forEach(el=>el.classList.toggle("sel",Number(el.dataset.sz)===n));const sd=document.getElementById("c-sd");if(sd)sd.textContent=sizeDesc(n);const ib=document.getElementById("c-ib");if(ib)ib.textContent=n+" teams · "+numRounds(n)+" rounds · 1 week per round";const g=document.getElementById("c-tg");if(g)g.innerHTML=newTeams.map((t,i)=>teHTML(t,i,"c")).join("");}
+
+function renderCreatePage(){
+  if(!S.user){requireUser(goCreate);return'<div class="loading"><div class="spinner"></div></div>';}
+  return'<div class="fsec"><h2>Create New Bracket</h2><div class="crd"><h3>Bracket Info</h3><div class="fld"><label>Name</label><input type="text" id="c-name" placeholder="e.g. Best Pizza in NYC 2025" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-size:14px;outline:none;flex:1;min-width:160px"></div><div class="info-b">&#128274; You must be signed in to create. You&#39;ll be set as the admin &mdash; only you can manage this bracket.</div></div><div class="crd"><h3>Bracket Size</h3><div class="size-track">'+SIZES.map(sz=>'<button class="size-opt'+(sz===newSize?" sel":"")+'" data-sz="'+sz+'" onclick="setNewSize('+sz+')">'+sz+'</button>').join("")+'</div><div class="size-desc" id="c-sd">'+sizeDesc(newSize)+'</div><div class="info-b" id="c-ib" style="margin-top:10px">'+newSize+' teams · '+numRounds(newSize)+' rounds · 1 week per round</div></div><div class="crd"><h3>Teams</h3><p style="color:var(--muted);font-size:13px;margin-bottom:14px">Enter team names for each seed. You can optionally add a photo for each team. Unfilled seeds will be treated as TBD.</p><div class="tgrid" id="c-tg">'+newTeams.map((t,i)=>teHTML(t,i,"c")).join("")+'</div></div><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px"><button class="btn" id="create-btn" onclick="saveNewBracket()" style="flex:1;min-width:180px">Create Bracket &#x1F680;</button><button class="btn-sec" onclick="goHome()">Cancel</button></div></div>';
+}
+
+async function saveNewBracket(){
+  const name=(document.getElementById("c-name")?.value||"").trim();
+  if(!name){toast("Enter a bracket name");return;}
+  if(!S.user){toast("Sign in first");return;}
+  if(newTeams.filter(t=>(t.name||"").trim()).length<2){toast("Add at least 2 team names");return;}
+  const btn=document.getElementById("create-btn");
+  if(btn){btn.disabled=true;btn.textContent="Saving…";}
+  try{
+    const teams=newTeams.map((t,i)=>({seed:i+1,name:(t.name||"").trim(),img:t.img||null}));
+    const b={id:genId(),name,adminUid:S.user.uid,adminEmail:S.user.email,size:newSize,teams,createdAt:new Date().toISOString(),roundOffset:0};
+    await fbSave(b);
+    newTeams=makeBlankTeams(16);newSize=16;
+    toast("Bracket created! 🎉");
+    openBracket(b.id);
+  }catch(e){console.error(e);toast("Error saving – check console");if(btn){btn.disabled=false;btn.textContent="Create Bracket 🚀";}}
+}
+
+/* ── Render: Manage Page ──────────────────────────── */
+function setEditSize(n){const old=[...editTeams];editTeams=makeBlankTeams(n);for(let i=0;i<Math.min(old.length,n);i++){editTeams[i].name=old[i].name||"";editTeams[i].img=old[i].img||null;}editSize=n;document.querySelectorAll(".size-opt").forEach(el=>el.classList.toggle("sel",Number(el.dataset.sz)===n));const sd=document.getElementById("e-sd");if(sd)sd.textContent=sizeDesc(n);const g=document.getElementById("e-tg");if(g)g.innerHTML=editTeams.map((t,i)=>teHTML(t,i,"e")).join("");}
+
+function renderManagePage(){
+  const b=S.brackets[S.activeBid];
+  if(!b)return'<div style="text-align:center;padding:60px"><button class="btn-sec" onclick="goHome()">&#8592; Home</button></div>';
+  if(!S.user||S.user.uid!==b.adminUid)return'<div style="text-align:center;padding:60px;color:var(--muted)"><h3 style="font-family:var(--fh);font-size:22px;margin-bottom:14px">Admin Only</h3><p style="margin-bottom:20px">You must be the bracket admin to manage it.</p><button class="btn-sec" onclick="openBracket(\''+b.id+'\')">&#8592; Back to Bracket</button></div>';
+  if(!editTeams){editTeams=(b.teams||[]).map(t=>({...t}));editSize=b.size||16;}
+  const cr=getCurrentRound(b),rn=roundNames(b.size||16);
+  const bv=S.votes[b.id]||{};
+  const tv=Object.values(bv).reduce((s,m)=>s+Object.values(m.counts||{}).reduce((a,c)=>a+c,0),0);
+  return'<div class="fsec"><h2>&#9881; Manage Bracket</h2><div class="crd"><h3>Status</h3><div class="info-b">Current round: <strong>'+(rn[cr]||"—")+'</strong> (Week '+(cr+1)+' of '+numRounds(b.size||16)+')<br>Total votes cast: <strong>'+tv+'</strong>&nbsp;&nbsp;&middot;&nbsp;&nbsp;Created: <strong>'+fmtDate(b.createdAt)+'</strong></div><div class="mg-grid"><button class="mg-btn" onclick="advanceRound()">&#9889; Demo: Advance Round</button><button class="mg-btn" onclick="resetTimer()">&#128197; Restart Week Timer</button><button class="mg-btn" onclick="resetVotesConfirm()">&#128260; Reset All Votes</button><button class="mg-btn dng" onclick="deleteConfirm()">&#128465; Delete Bracket</button></div></div><div class="crd"><h3>Edit Info</h3><div class="fld"><label>Name</label><input type="text" id="e-name" value="'+esc(b.name)+'" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-size:14px;outline:none;flex:1;min-width:160px"></div></div><div class="crd"><h3>Edit Size</h3><div class="warn-b">&#x26A0; Changing the size will reset all votes.</div><div class="size-track">'+SIZES.map(sz=>'<button class="size-opt'+(sz===editSize?" sel":"")+'" data-sz="'+sz+'" onclick="setEditSize('+sz+')">'+sz+'</button>').join("")+'</div><div class="size-desc" id="e-sd" style="margin-top:8px">'+sizeDesc(editSize)+'</div></div><div class="crd"><h3>Edit Teams</h3><div class="tgrid" id="e-tg">'+editTeams.map((t,i)=>teHTML(t,i,"e")).join("")+'</div></div><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" onclick="saveEdits()" style="flex:1;min-width:180px">Save Changes</button><button class="btn-sec" onclick="openBracket(\''+b.id+'\')">&#8592; Back to Bracket</button></div></div>';
+}
+
+async function saveEdits(){
+  const b=S.brackets[S.activeBid];if(!b)return;
+  const name=(document.getElementById("e-name")?.value||"").trim();
+  if(!name){toast("Enter a bracket name");return;}
+  const teams=(editTeams||b.teams||[]).map((t,i)=>({seed:i+1,name:(t.name||"").trim(),img:t.img||null}));
+  const sizeChanged=editSize!==(b.size||16);
+  if(sizeChanged)await fbResetVotes(b.id);
+  await fbSave({...b,name,size:editSize,teams});
+  editTeams=null;
+  toast(sizeChanged?"Saved! Votes reset due to size change.":"Saved! ✓");
+  openBracket(b.id);
+}
+async function advanceRound(){
+  const b=S.brackets[S.activeBid];if(!b)return;
+  const newOffset=(b.roundOffset||0)+1;
+  await fbSave({...b,roundOffset:newOffset});
+  toast("Advanced to next round (demo mode)");
+  editTeams=null;
+  const man=document.getElementById("app");if(man)man.innerHTML=renderManagePage();
+}
+async function resetTimer(){
+  const b=S.brackets[S.activeBid];if(!b)return;
+  await fbSave({...b,createdAt:new Date().toISOString(),roundOffset:0});
+  toast("Week timer restarted from now");
+  editTeams=null;
+  const man=document.getElementById("app");if(man)man.innerHTML=renderManagePage();
+}
+const resetVotesConfirm=()=>showModal("Reset All Votes?","This clears every vote but keeps all teams and bracket structure. Cannot be undone.",false,async()=>{await fbResetVotes(S.activeBid);toast("All votes cleared");editTeams=null;const man=document.getElementById("app");if(man)man.innerHTML=renderManagePage();});
+const deleteConfirm=()=>showModal("Delete This Bracket?","Permanently deletes the bracket, all teams, and all votes. This cannot be undone.",true,async()=>{const bid=S.activeBid;await fbDelete(bid);S.activeBid=null;editTeams=null;toast("Bracket deleted");goHome();});
+
+/* ── Expose globals for onclick handlers ──────────── */
+Object.assign(window,{goHome,openBracket,goCreate,goManage,requireUser,doSignOut,dismissAuth,handleSendLink,handleConfirmEmail,castVote,setNewSize,setEditSize,saveNewBracket,saveEdits,advanceRound,resetTimer,resetVotesConfirm,deleteConfirm,handleImg,refreshGrid,showModal,closeModal,renderApp,renderAuthOverlay,S,get newTeams(){return newTeams;},set newTeams(v){newTeams=v;},get editTeams(){return editTeams;},set editTeams(v){editTeams=v;}});
+
+/* ── Init ─────────────────────────────────────────── */
+// 1. Check if this page load is an email link sign-in callback
+if(isSignInWithEmailLink(auth,window.location.href)){
+  S.view="confirming";
+  const savedEmail=localStorage.getItem("bv_email_for_link");
+  if(savedEmail){
+    // Auto-complete if we have the email
+    completeEmailSignIn(savedEmail).then(()=>{S.view="home";});
+  }
+  // If no email saved (different device/browser), renderConfirmingPage will prompt them
+}
+
+// 2. Firebase Auth state observer
+onAuthStateChanged(auth,user=>{
+  if(user){S.user={uid:user.uid,email:user.email};}
+  else{S.user=null;}
+  if(!S.initialized){
+    S.initialized=true;
+    if(S.view!=="confirming")S.view="home";
+    startBListener();
+  } else {
+    renderApp();
+  }
+});
+</script>
+</body>
+</html>
